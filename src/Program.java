@@ -6,6 +6,9 @@ public class Program {
 		DepartmentMenu menu = new DepartmentMenu();
 		menu.showMenu();
 		System.out.println("수정했어여");
+		System.out.println("수정했어여2");
+
+		
 	}
 
 }
