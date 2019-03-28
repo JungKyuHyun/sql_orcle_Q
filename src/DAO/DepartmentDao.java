@@ -53,11 +53,13 @@ public class DepartmentDao {
 	    	System.out.print("부서코드:");
 	    	int deptno = Integer.parseInt(DepartmentMenu.sc.nextLine());
 	    	if(isExist(deptno)) {
-	    		System.out.println("(중복값 발생!) 다른 값을 입력하세요.");
 	    		return;
 	    	}
 	    	System.out.print("부서이름:");
 	    	String dname = DepartmentMenu.sc.nextLine();
+	    	if(isExist(dname)) {
+	    		return;
+	    	}
             conn = SingletonHelper.getConnection("oracle");
             String sql = "insert into department(deptno,dname) values(?,?)";
             pstmt = conn.prepareStatement(sql);
@@ -78,7 +80,12 @@ public class DepartmentDao {
         }
     }
     // 3. 부서변경
-    public static int updateDept() {
+    public static void updateDept() {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        int rowcount = 0;
+    	
+        try {
     	System.out.print("변경할부서명:");
     	String dname = DepartmentMenu.sc.nextLine();
     	Department temp = getDeptListByDeptno(dname); //toString
@@ -87,13 +94,23 @@ public class DepartmentDao {
     	System.out.println("[부서 변경 정보 입력]");
     	System.out.print("부서코드:");
     	int deptno = Integer.parseInt(DepartmentMenu.sc.nextLine());
+    	try {
+			if(isExist(deptno)) {
+				return;
+			}
+		} catch (Exception e1) {
+			System.out.println(e1.getMessage());
+		}
+    	
     	System.out.print("부서이름:");
     	String dname1 = DepartmentMenu.sc.nextLine();
-    	
-        Connection conn = null;
-        PreparedStatement pstmt = null;
-        int rowcount = 0;
-        try {
+    	try {
+			if(isExist(dname1)) {
+				return;
+			}
+		} catch (Exception e1) {
+			System.out.println(e1.getMessage());
+		}        
             conn = SingletonHelper.getConnection("oracle");
             String sql = "update department set dname=?, deptno=? where deptno=?";
             pstmt = conn.prepareStatement(sql);
@@ -108,7 +125,6 @@ public class DepartmentDao {
         } finally {
             SingletonHelper.close(pstmt);
         }
-        return rowcount;
     }
     
     //3-1. 조건검색
@@ -143,14 +159,21 @@ public class DepartmentDao {
 	
 
 	//4. 부서삭제
-    public static int deleteDepartment() {
+    public static void deleteDepartment() {
         // delete from department where deptno=?
-       	System.out.print("삭제할부서명:");
-    	String dname = DepartmentMenu.sc.nextLine();
         Connection conn = null;
         PreparedStatement pstmt = null;
         int rowcount = 0;
         try {
+    	System.out.print("삭제할부서명:");
+    	String dname = DepartmentMenu.sc.nextLine();
+    	try {
+			if(!isExist(dname)) {
+				return;
+			}
+		} catch (Exception e1) {
+			System.out.println(e1.getMessage());
+		} 
             conn = SingletonHelper.getConnection("oracle");
             String sql = "delete from department where dname=?";
             pstmt = conn.prepareStatement(sql);
@@ -161,7 +184,6 @@ public class DepartmentDao {
         } finally {
             SingletonHelper.close(pstmt);
         }
-        return rowcount;
     }
     
      //5. 부서검색 (where dname like '%A%')
@@ -240,5 +262,31 @@ public class DepartmentDao {
             }
             return true;
         }   
-
+    	
+    	public static boolean isExist(String dname) throws Exception {
+            Connection conn = null;
+            PreparedStatement pstmt = null;
+            int rowcount = 0;
+            try {
+                conn = SingletonHelper.getConnection("oracle");
+                conn.setAutoCommit(false);
+                String sql = "update department set dname=? where dname=?";
+                pstmt = conn.prepareStatement(sql);
+                pstmt.setString(1, "임시");
+                pstmt.setString(2, dname);
+                rowcount = pstmt.executeUpdate();
+                if(rowcount==0) {
+                	System.out.println("값이 없습니다.");
+                	return false;
+                }
+                System.out.println("값이 있습니다.");
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
+            } finally {
+            	conn.rollback();
+                SingletonHelper.close(pstmt);
+            }
+            System.out.println("(중복값 발생!) 다른 값을 입력하세요.");
+            return true;
+        }   
 }   
